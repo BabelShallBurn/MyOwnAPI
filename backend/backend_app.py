@@ -46,5 +46,24 @@ def delete_post(post_id):
     return jsonify({"message": f"Post with id {post_id} has been deleted successfully."}), 200
 
 
+@app.route('/api/posts/<int:post_id>', methods=['PUT'])
+def update_post(post_id):
+    updated_post = request.get_json()
+    if not updated_post:
+        return jsonify({"error": "Post must contain title and content"}), 400        
+    if 'title' not in updated_post:
+        return jsonify({"error": "Post must contain title"}), 400        
+    if 'content' not in updated_post:
+        return jsonify({"error": "Post must contain content"}), 400
+
+    for post in POSTS:
+        if post['id'] == post_id:
+            post['title'] = updated_post['title']
+            post['content'] = updated_post['content']
+            return jsonify(post), 200
+
+    return jsonify({"error": "Post not found"}), 404
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
