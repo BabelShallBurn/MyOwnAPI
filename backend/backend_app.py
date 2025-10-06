@@ -1,17 +1,21 @@
 from flask import Flask, jsonify, request
+from typing import List, Dict, Any, Tuple
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
 
-POSTS = [
+POSTS: List[Dict[str, Any]] = [
     {"id": 1, "title": "First post", "content": "This is the first post."},
     {"id": 2, "title": "Second post", "content": "This is the second post."},
 ]
 
 
 @app.route('/api/posts', methods=['GET'])
-def get_posts():
+def get_posts() -> Any:
+    """
+    Returns all posts. Supports optional sorting via 'sort' and 'direction' query params.
+    """
     sort_by = request.args.get('sort', 'id')
     sort_direction = request.args.get('direction', 'asc')
 
@@ -28,7 +32,10 @@ def get_posts():
 
 
 @app.route('/api/posts', methods=['POST'])
-def add_post():
+def add_post() -> Tuple[Any, int]:
+    """
+    Adds a new post. Requires JSON body with 'title' and 'content'.
+    """
     new_post = request.get_json()
 
     if not new_post:
@@ -49,7 +56,10 @@ def add_post():
 
 
 @app.route('/api/posts/<int:post_id>', methods=['DELETE'])
-def delete_post(post_id):
+def delete_post(post_id: int) -> Tuple[Any, int]:
+    """
+    Deletes a post by ID. Returns success message or error if not found.
+    """
     global POSTS
     if not any(post['id'] == post_id for post in POSTS):
         return jsonify({"error": "Post not found"}), 404
@@ -59,7 +69,10 @@ def delete_post(post_id):
 
 
 @app.route('/api/posts/<int:post_id>', methods=['PUT'])
-def update_post(post_id):
+def update_post(post_id: int) -> Tuple[Any, int]:
+    """
+    Updates a post by ID. Requires JSON body with 'title' and 'content'.
+    """
     updated_post = request.get_json()
     if not updated_post:
         return jsonify({"error": "Post must contain title and content"}), 400        
@@ -77,18 +90,25 @@ def update_post(post_id):
     return jsonify({"error": "Post not found"}), 404
 
 @app.route('/api/posts/search', methods=['GET'])
-def search_posts():
-    title_query = request.args.get('title', '').lower()
-    content_query = request.args.get('content', '').lower()
+def search_posts() -> Tuple[Any, int]:
+        """
+        Searches posts by title and/or content.
+        Query params:
+          - title: substring to search in title (optional)
+          - content: substring to search in content (optional)
+        Returns posts matching both criteria (case-insensitive).
+        """
+        title_query = request.args.get('title', '').lower()
+        content_query = request.args.get('content', '').lower()
 
-    matched_posts = [
-        post for post in POSTS
-        if (
-            (title_query in post['title'].lower() if title_query else True)
-            and (content_query in post['content'].lower() if content_query else True)
-        )
-    ]
-    return jsonify(matched_posts), 200
+        matched_posts = [
+            post for post in POSTS
+            if (
+                (title_query in post['title'].lower() if title_query else True)
+                and (content_query in post['content'].lower() if content_query else True)
+            )
+        ]
+        return jsonify(matched_posts), 200
 
 
 if __name__ == '__main__':
